@@ -33,3 +33,31 @@ The dev command starts the backend first and waits for `/api/health` before star
 - Demo stores: Mobiles, Cloths, Slippers, Electronics, Shoes, Grocery, Kitchen, Furniture, Beauty, Toys, Books, and Bags
 - Pet products removed from demo data
 - Deployment guide in `DEPLOYMENT.md`
+
+## Development Timeline
+
+Project timeline documented for the development window from `22-05-2026` to `31-05-2026`.
+
+### Week 1: Architecture & Core Authentication
+
+- Day 1-2: System architecture design and database schema modeling for Users, Stores, Products, and Orders.
+- Day 3-5: Node/Express server setup and JWT-based Role-Based Access Control (RBAC).
+- Day 6-7: React frontend scaffolding and secure login/registration workflows for Vendors and Customers.
+
+### Week 2: Inventory & Store Management
+
+- Day 1-3: Backend API routes for Store and Product CRUD operations, including image upload planning.
+- Day 4-6: Vendor Dashboard UI for managing inventory, pricing, and variants.
+- Day 7: Integration testing of frontend and backend inventory workflows.
+
+### Week 3: Cart, Checkout & Payments
+
+- Day 1-2: Global cart state and persistent cart behavior.
+- Day 3-5: Payment API integration flow, payment method handling, and webhook-ready order status logic.
+- Day 6-7: Customer checkout flow, order creation logic, and transaction confirmation support.
+
+### Week 4: Analytics, Refinement & Deployment
+
+- Day 1-3: Super Admin and Vendor analytics dashboards for revenue, order volume, payment methods, and fulfillment.
+- Day 4-5: Testing, error handling optimization, and MongoDB query indexing.
+- Day 6-7: CI/CD and production deployment planning for Vercel frontend and Render/AWS backend.
