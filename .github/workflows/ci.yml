@@ -33,6 +33,14 @@ jobs:
         run: node -e "require('./src/app'); console.log('backend app loaded')"
         working-directory: backend
 
+      - name: Audit backend dependencies
+        run: npm audit --audit-level=high
+        working-directory: backend
+
+      - name: Audit frontend dependencies
+        run: npm audit --audit-level=high
+        working-directory: frontend
+
       - name: Build frontend
         run: npm run build
         working-directory: frontend
