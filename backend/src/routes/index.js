@@ -205,6 +205,10 @@ router.post('/checkout', protect, allowRoles('customer', 'vendor', 'super_admin'
         throw new Error('Cart can only checkout products from one tenant store at a time');
       }
       const quantity = Math.max(1, Number(item.quantity || 1));
+      if (Number(product.stock || 0) < quantity) {
+        res.status(400);
+        throw new Error(`${product.title} has only ${product.stock} units available`);
+      }
       orderItems.push({ productId: product.id || product._id, title: product.title, quantity, unitPrice: product.price });
       total += product.price * quantity;
     }
