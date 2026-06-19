@@ -16,6 +16,11 @@ function enforceTenant(req, storeId) {
   return String(req.user.storeId || '') === String(storeId || '');
 }
 
+function validateShippingAddress(address = {}) {
+  const requiredFields = ['fullName', 'line1', 'city', 'country', 'phone'];
+  return requiredFields.every((field) => String(address[field] || '').trim().length > 0);
+}
+
 router.post('/auth/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -178,6 +183,10 @@ router.post('/checkout', protect, allowRoles('customer', 'vendor', 'super_admin'
     if (!allowedMethods.includes(paymentMethod)) {
       res.status(400);
       throw new Error('Unsupported payment method');
+    }
+    if (!validateShippingAddress(shippingAddress)) {
+      res.status(400);
+      throw new Error('Complete shipping address is required');
     }
 
     const orderItems = [];
