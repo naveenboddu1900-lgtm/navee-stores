@@ -11,11 +11,12 @@ const orderSchema = new mongoose.Schema({
   storeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Store', required: true, index: true },
   customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   items: { type: [orderItemSchema], validate: [(items) => items.length > 0, 'Order must contain items'] },
-  subtotal: { type: Number, required: true, min: 0, default: 0 },
-  tax: { type: Number, required: true, min: 0, default: 0 },
-  shippingFee: { type: Number, required: true, min: 0, default: 0 },
   total: { type: Number, required: true, min: 0 },
+  currency: { type: String, default: 'usd', uppercase: false },
   paymentMethod: { type: String, enum: ['card', 'upi', 'net_banking', 'wallet', 'cod'], default: 'card', index: true },
+  paymentProvider: { type: String, enum: ['stripe', 'demo', 'manual'], default: 'demo' },
+  stripePaymentIntentId: { type: String, index: true, sparse: true },
+  stripeEventIds: { type: [String], default: [] },
   paymentStatus: { type: String, enum: ['pending', 'paid', 'failed', 'refunded'], default: 'pending', index: true },
   fulfillmentStatus: { type: String, enum: ['queued', 'processing', 'shipped', 'delivered', 'cancelled'], default: 'queued', index: true },
   shippingAddress: {
@@ -28,5 +29,7 @@ const orderSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 orderSchema.index({ storeId: 1, createdAt: -1 });
+orderSchema.index({ customerId: 1, createdAt: -1 });
+orderSchema.index({ paymentStatus: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Order', orderSchema);

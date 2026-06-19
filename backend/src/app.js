@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const apiRoutes = require('./routes');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+const { version } = require('../package.json');
 
 const app = express();
 
@@ -13,14 +14,17 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.use('/api/integrations/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    name: 'NAVEE Stores Multi-Tenant Commerce API',
+    name: 'Market Place Multi-Tenant Commerce API',
+    version,
     mode: global.__REDX_DB_MODE__ || 'booting',
+    environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString()
   });
 });

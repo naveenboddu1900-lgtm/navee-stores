@@ -9,7 +9,7 @@ const messages = {
   },
   register: {
     title: 'Account created',
-    text: 'Your NAVEE Stores customer account is ready.',
+    text: 'Your Market Place customer account is ready.',
     action: 'Open app',
     href: '/app'
   },

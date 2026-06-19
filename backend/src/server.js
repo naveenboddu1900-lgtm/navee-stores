@@ -10,12 +10,12 @@ async function start() {
   await seedDemoData();
 
   const server = app.listen(port, () => {
-    console.log(`NAVEE Stores API running on http://localhost:${port}`);
+    console.log(`Market Place API running on http://localhost:${port}`);
   });
 
   server.on('error', (error) => {
     if (error.code === 'EADDRINUSE') {
-      console.error(`Port ${port} is already in use. Stop the existing backend or run the app with one npm run dev command.`);
+      console.error(`Port ${port} is already in use. Stop the running backend or set PORT to another value.`);
       process.exit(1);
     }
     throw error;
@@ -23,6 +23,6 @@ async function start() {
 }
 
 start().catch((error) => {
-  console.error('Unable to start NAVEE Stores API:', error);
+  console.error('Unable to start Market Place API:', error);
   process.exit(1);
 });

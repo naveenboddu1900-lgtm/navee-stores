@@ -1,7 +1,32 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import AnalyticsCharts from '../components/AnalyticsCharts'
 import MetricCard from '../components/MetricCard'
-import { money } from '../utils/api'
+import { api, money } from '../utils/api'
 
-export default function AdminDashboard({ summary, users }) {
+export default function AdminDashboard({ summary, users, stores }) {
+  const navigate = useNavigate()
+  const [form, setForm] = useState({
+    ownerName: 'New Vendor',
+    ownerEmail: 'new-vendor@redx.dev',
+    storeName: 'New Tenant Store',
+    slug: 'new-tenant-store',
+    plan: 'starter',
+    currency: 'USD'
+  })
+  const [status, setStatus] = useState('')
+
+  async function createTenant(event) {
+    event.preventDefault()
+    setStatus('')
+    try {
+      await api('/admin/stores', { method: 'POST', body: form })
+      navigate('/success?type=tenant')
+    } catch (error) {
+      setStatus(error.message)
+    }
+  }
+
   return (
     <main className="workspace">
       <section className="section-head">
@@ -14,44 +39,23 @@ export default function AdminDashboard({ summary, users }) {
         <MetricCard label="Revenue" value={money(summary?.revenue)} sub="All tenants" />
         <MetricCard label="AOV" value={money(summary?.averageOrderValue)} sub="Average order value" />
         <MetricCard label="Users" value={summary?.users || users.length} sub="RBAC accounts" />
-        <MetricCard label="Low Stock" value={summary?.lowStock || 0} sub="Needs vendor attention" />
+        <MetricCard label="Tenants" value={stores.length} sub="Active stores" />
       </section>
-      <section className="analytics-grid">
-        <div className="panel">
-          <span className="eyebrow">Payment methods</span>
-          <div className="mini-bars">
-            {Object.entries(summary?.byPaymentMethod || {}).map(([method, count]) => (
-              <div key={method}>
-                <span>{method.replace('_', ' ')}</span>
-                <strong>{count}</strong>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="panel">
-          <span className="eyebrow">Fulfillment</span>
-          <div className="mini-bars">
-            {Object.entries(summary?.byFulfillment || {}).map(([status, count]) => (
-              <div key={status}>
-                <span>{status}</span>
-                <strong>{count}</strong>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="panel">
-          <span className="eyebrow">Top categories</span>
-          <div className="mini-bars">
-            {(summary?.topCategories || []).map((item) => (
-              <div key={item.category}>
-                <span>{item.category}</span>
-                <strong>{item.count}</strong>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <AnalyticsCharts summary={summary} />
       <section className="two-col">
+        <div className="panel">
+          <span className="eyebrow">Tenants</span>
+          <div className="table">
+            {stores.map((store) => (
+              <div className="table-row" key={store.id || store._id}>
+                <strong>{store.name}</strong>
+                <span>{store.plan}</span>
+                <span>{store.status}</span>
+                <span>{store.currency}</span>
+              </div>
+            ))}
+          </div>
+        </div>
         <div className="panel">
           <span className="eyebrow">Users</span>
           <div className="table">
@@ -65,6 +69,19 @@ export default function AdminDashboard({ summary, users }) {
             ))}
           </div>
         </div>
+      </section>
+      <section className="panel form-panel admin-create">
+        <span className="eyebrow">Tenant onboarding</span>
+        <h2>Create vendor store</h2>
+        <form className="tenant-form" onSubmit={createTenant}>
+          {Object.keys(form).map((key) => (
+            <label key={key}>{key.replace(/([A-Z])/g, ' $1')}
+              <input value={form[key]} onChange={(event) => setForm({ ...form, [key]: event.target.value })} />
+            </label>
+          ))}
+          <button className="primary" type="submit">Create tenant</button>
+        </form>
+        {status && <p className="status">{status}</p>}
       </section>
     </main>
   )

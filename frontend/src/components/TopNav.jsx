@@ -1,6 +1,7 @@
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import BrandLogo from './BrandLogo'
 
 export default function TopNav() {
   const { user, logout } = useAuth()
@@ -8,10 +9,11 @@ export default function TopNav() {
 
   return (
     <header className="top-nav">
-      <Link className="brand" to="/" aria-label="NAVEE Stores home">
-        <span className="mark">N</span>
+      <Link className="brand" to="/" aria-label="Market Place home">
+        <BrandLogo />
         <span>
-          <strong>NAVEE Stores</strong>
+          <strong>Market Place</strong>
+          <small>multi-vendor commerce</small>
         </span>
       </Link>
       <nav>
@@ -22,7 +24,6 @@ export default function TopNav() {
             <NavLink to="/products">Products</NavLink>
             <NavLink to="/stores">Stores</NavLink>
             <NavLink to="/cart">Cart ({count})</NavLink>
-            <NavLink to="/payments">Payments</NavLink>
             <NavLink to="/orders">Details</NavLink>
           </>
         ) : (
