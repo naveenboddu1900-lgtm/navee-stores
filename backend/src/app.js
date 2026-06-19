@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const apiRoutes = require('./routes');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+const { version } = require('../package.json');
 
 const app = express();
 
@@ -21,7 +22,9 @@ app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     name: 'Market Place Multi-Tenant Commerce API',
+    version,
     mode: global.__REDX_DB_MODE__ || 'booting',
+    environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString()
   });
 });
