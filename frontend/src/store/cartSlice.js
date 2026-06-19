@@ -8,6 +8,12 @@ function productId(product) {
   return product.id || product._id
 }
 
+function clampQuantity(product, quantity) {
+  const stock = Number(product.stock || 0)
+  const safeQuantity = Math.max(1, Number(quantity || 1))
+  return stock > 0 ? Math.min(safeQuantity, stock) : safeQuantity
+}
+
 const cartSlice = createSlice({
   name: 'cart',
   initialState,
@@ -16,7 +22,7 @@ const cartSlice = createSlice({
       const product = { ...action.payload, id: productId(action.payload) }
       const existing = state.items.find((item) => item.product.id === product.id)
       if (existing) {
-        existing.quantity += 1
+        existing.quantity = clampQuantity(existing.product, existing.quantity + 1)
       } else {
         state.items.push({ product, quantity: 1 })
       }
@@ -24,7 +30,7 @@ const cartSlice = createSlice({
     updateQuantity(state, action) {
       const { productId: id, quantity } = action.payload
       const item = state.items.find((entry) => entry.product.id === id)
-      if (item) item.quantity = Math.max(1, Number(quantity || 1))
+      if (item) item.quantity = clampQuantity(item.product, quantity)
     },
     removeFromCart(state, action) {
       state.items = state.items.filter((item) => item.product.id !== action.payload)
