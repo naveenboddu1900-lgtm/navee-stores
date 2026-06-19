@@ -1,31 +1,16 @@
 const { spawn } = require('child_process');
 const http = require('http');
-const net = require('net');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
-const backendPort = Number(process.env.PORT || 5000);
-const frontendPort = Number(process.env.FRONTEND_PORT || 5173);
-const maxWaitMs = 30000;
-
-function isPortInUse(port) {
-  return new Promise((resolve) => {
-    const socket = net.createConnection({ port, host: '127.0.0.1' });
-    socket.once('connect', () => {
-      socket.destroy();
-      resolve(true);
-    });
-    socket.once('error', () => resolve(false));
-  });
-}
+const backendHealthUrl = new URL(process.env.BACKEND_HEALTH_URL || 'http://localhost:5000/api/health');
 
 function run(name, cwd) {
   const command = process.platform === 'win32' ? 'cmd.exe' : 'npm';
-  const args = process.platform === 'win32' ? ['/d', '/s', '/c', 'npm.cmd', 'run', 'dev'] : ['run', 'dev'];
+  const args = process.platform === 'win32' ? ['/c', 'npm', 'run', 'dev'] : ['run', 'dev'];
   const child = spawn(command, args, {
     cwd: path.join(root, cwd),
-    stdio: 'inherit',
-    shell: false
+    stdio: 'inherit'
   });
 
   child.on('exit', (code) => {
@@ -35,81 +20,59 @@ function run(name, cwd) {
   return child;
 }
 
-function healthCheck() {
-  return new Promise((resolve) => {
-    const req = http.get(`http://127.0.0.1:${backendPort}/api/health`, (res) => {
-      res.resume();
-      resolve(res.statusCode >= 200 && res.statusCode < 500);
-    });
-    req.setTimeout(1000, () => {
-      req.destroy();
-      resolve(false);
-    });
-    req.on('error', () => resolve(false));
+const backend = run('backend', 'backend');
+let frontend = null;
+
+function waitForBackend(retries = 40) {
+  return new Promise((resolve, reject) => {
+    let attempts = 0;
+
+    function check() {
+      attempts += 1;
+      const request = http.get(backendHealthUrl, (response) => {
+        response.resume();
+        if (response.statusCode >= 200 && response.statusCode < 500) {
+          resolve();
+          return;
+        }
+        retry();
+      });
+
+      request.on('error', retry);
+      request.setTimeout(1500, () => {
+        request.destroy();
+        retry();
+      });
+    }
+
+    function retry() {
+      if (attempts >= retries) {
+        reject(new Error(`Backend did not become ready at ${backendHealthUrl.href}`));
+        return;
+      }
+      setTimeout(check, 1000);
+    }
+
+    check();
   });
 }
 
-async function waitForBackend() {
-  const startedAt = Date.now();
-  while (Date.now() - startedAt < maxWaitMs) {
-    if (await healthCheck()) return true;
-    await new Promise((resolve) => setTimeout(resolve, 500));
-  }
-  return false;
-}
-
-let backend;
-let frontend;
-let shuttingDown = false;
-
-function startBackend() {
-  backend = run('backend', 'backend');
-  backend.on('exit', (code) => {
-    if (shuttingDown || code === 0) return;
-    console.error('Backend stopped. Restarting to keep the Vite proxy alive...');
-    startBackend();
-  });
-}
-
-function startFrontend() {
-  frontend = run('frontend', 'frontend');
-}
-
-async function start() {
-  if (await isPortInUse(backendPort)) {
-    console.log(`Backend already running on http://127.0.0.1:${backendPort}.`);
-  } else {
-    startBackend();
-  }
-
-  const ready = await waitForBackend();
-  if (!ready) {
-    console.error(`Backend did not become ready on http://127.0.0.1:${backendPort}/api/health.`);
-    console.error('Frontend was not started because Vite proxy calls would fail.');
+waitForBackend()
+  .then(() => {
+    console.log(`Backend ready at ${backendHealthUrl.href}. Starting frontend...`);
+    frontend = run('frontend', 'frontend');
+  })
+  .catch((error) => {
+    console.error(error.message);
+    backend.kill();
     process.exit(1);
-  }
-
-  console.log(`Backend ready on http://127.0.0.1:${backendPort}.`);
-  if (await isPortInUse(frontendPort)) {
-    console.log(`Frontend already running on http://localhost:${frontendPort}.`);
-    return;
-  }
-
-  startFrontend();
-  console.log(`Frontend starting on http://localhost:${frontendPort}.`);
-}
+  });
 
 function shutdown() {
-  shuttingDown = true;
-  if (backend) backend.kill();
+  backend.kill();
   if (frontend) frontend.kill();
   process.exit(0);
 }
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
-
-start().catch((error) => {
-  console.error('Unable to start NAVEE Stores dev servers:', error);
-  process.exit(1);
-});
