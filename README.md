@@ -12,6 +12,20 @@ cmd /c npm run dev
 Frontend: http://localhost:5173  
 Backend: http://localhost:5000
 
+If port `5000` is already busy, start the backend on another port:
+
+```bash
+cd backend
+set PORT=5001
+npm run dev
+```
+
+Then point the frontend at it with `frontend/.env`:
+
+```bash
+VITE_API_URL=http://localhost:5001/api
+```
+
 ## Demo Users
 
 - Super Admin: `admin@redx.dev` / `Password123!`
