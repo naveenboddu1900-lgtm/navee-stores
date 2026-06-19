@@ -9,8 +9,16 @@ async function start() {
   await connectDatabase();
   await seedDemoData();
 
-  app.listen(port, () => {
+  const server = app.listen(port, () => {
     console.log(`Market Place API running on http://localhost:${port}`);
+  });
+
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use. Stop the running backend or set PORT to another value.`);
+      process.exit(1);
+    }
+    throw error;
   });
 }
 
