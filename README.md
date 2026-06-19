@@ -1,6 +1,6 @@
-# NAVEE Stores
+# Market Place
 
-NAVEE Stores is a full-stack MERN-style multi-tenant e-commerce SaaS project.
+Market Place is a full-stack MERN-style multi-tenant e-commerce SaaS project.
 
 ## Run
 
@@ -12,8 +12,6 @@ cmd /c npm run dev
 Frontend: http://localhost:5173  
 Backend: http://localhost:5000
 
-The dev command starts the backend first and waits for `/api/health` before starting the frontend, so Vite proxy requests for login, register, stores, products, and checkout have a live backend target.
-
 ## Demo Users
 
 - Super Admin: `admin@redx.dev` / `Password123!`
@@ -24,40 +22,45 @@ The dev command starts the backend first and waits for `/api/health` before star
 
 - Separate login and register pages
 - Login-gated app interface
-- Products, stores, cart, payments, details, vendor, and admin pages
+- Products, stores, cart, details, vendor, and admin pages
 - Checkout payment methods
-- Persistent cart, order totals, tax, shipping, and payment status
-- Refined analytics for payment method, fulfillment, category, stock, and revenue
+- Redux Toolkit cart state
+- Stripe payment intent and webhook integration with demo fallback
+- Super Admin and Vendor analytics dashboards
+- MongoDB connection health and query indexes
 - Success pages for login, registration, checkout, and admin/vendor actions
-- 148 products across 12 demo stores
-- Demo stores: Mobiles, Cloths, Slippers, Electronics, Shoes, Grocery, Kitchen, Furniture, Beauty, Toys, Books, and Bags
-- Pet products removed from demo data
-- Deployment guide in `DEPLOYMENT.md`
+- 30 products and 21 stores in demo data
 
-## Development Timeline
+## Week 3 And 4 Updates
 
-Project timeline documented for the development window from `22-05-2026` to `31-05-2026`.
+- Cart state now uses Redux Toolkit with shared selectors for cart count, total, and line items.
+- Checkout creates orders, starts Stripe payment intents when `STRIPE_SECRET_KEY` is present, and keeps demo payments available for local development.
+- Stripe webhooks update order payment status when `STRIPE_WEBHOOK_SECRET` is configured.
+- Order confirmation email uses SMTP when mail settings exist and otherwise queues a demo confirmation response.
+- Admin and vendor dashboards include revenue, order volume, AOV, fulfillment, and Recharts visualizations.
+- MongoDB indexes cover tenant products, user/admin lists, customer orders, store orders, payment status, and dashboard timelines.
+- GitHub Actions CI installs backend/frontend dependencies, validates backend imports, and builds the frontend.
 
-### Week 1: Architecture & Core Authentication
+## MongoDB
 
-- Day 1-2: System architecture design and database schema modeling for Users, Stores, Products, and Orders.
-- Day 3-5: Node/Express server setup and JWT-based Role-Based Access Control (RBAC).
-- Day 6-7: React frontend scaffolding and secure login/registration workflows for Vendors and Customers.
+Create `backend/.env` from `backend/.env.example` and set `MONGO_URI`.
 
-### Week 2: Inventory & Store Management
+```bash
+MONGO_URI=mongodb://127.0.0.1:27017/market_place
+```
 
-- Day 1-3: Backend API routes for Store and Product CRUD operations, including image upload planning.
-- Day 4-6: Vendor Dashboard UI for managing inventory, pricing, and variants.
-- Day 7: Integration testing of frontend and backend inventory workflows.
+If `MONGO_URI` is missing, the backend runs in seeded memory mode for demos.
 
-### Week 3: Cart, Checkout & Payments
+## Stripe And Email
 
-- Day 1-2: Global cart state and persistent cart behavior.
-- Day 3-5: Payment API integration flow, payment method handling, and webhook-ready order status logic.
-- Day 6-7: Customer checkout flow, order creation logic, and transaction confirmation support.
+Set these variables in `backend/.env` and in production host secrets:
 
-### Week 4: Analytics, Refinement & Deployment
-
-- Day 1-3: Super Admin and Vendor analytics dashboards for revenue, order volume, payment methods, and fulfillment.
-- Day 4-5: Testing, error handling optimization, and MongoDB query indexing.
-- Day 6-7: CI/CD and production deployment planning for Vercel frontend and Render/AWS backend.
+```bash
+STRIPE_SECRET_KEY=sk_live_or_test_key
+STRIPE_WEBHOOK_SECRET=whsec_webhook_secret
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=mailer@example.com
+SMTP_PASS=replace_me
+MAIL_FROM=Market Place <no-reply@marketplace.local>
+```

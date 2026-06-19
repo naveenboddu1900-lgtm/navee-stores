@@ -14,7 +14,7 @@ const displayCards = [
     label: 'Open tenants',
     href: '/stores',
     image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1100&q=80',
-    text: 'View all stores running on NAVEE Stores.'
+    text: 'View all stores running on Market Place.'
   },
   {
     title: 'Cart',
@@ -22,13 +22,6 @@ const displayCards = [
     href: '/cart',
     image: 'https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?auto=format&fit=crop&w=1100&q=80',
     text: 'Review cart, address, and payment methods.'
-  },
-  {
-    title: 'Payments',
-    label: 'Methods',
-    href: '/payments',
-    image: 'https://images.unsplash.com/photo-1556745757-8d76bdb6984b?auto=format&fit=crop&w=1100&q=80',
-    text: 'View payment methods and payment status.'
   },
   {
     title: 'Details',
@@ -47,7 +40,7 @@ export default function HomePage({ products, stores }) {
       <section className="display-hero">
         <div>
           <span className="eyebrow">App interface</span>
-          <h1>NAVEE Stores</h1>
+          <h1>Market Place</h1>
           <p>Choose one section from the display page. Each section opens separately, so the interface stays clean and focused.</p>
         </div>
         <div className="display-summary">

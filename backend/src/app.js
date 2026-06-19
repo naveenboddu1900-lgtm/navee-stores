@@ -13,13 +13,14 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.use('/api/integrations/stripe/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    name: 'NAVEE Stores Multi-Tenant Commerce API',
+    name: 'Market Place Multi-Tenant Commerce API',
     mode: global.__REDX_DB_MODE__ || 'booting',
     timestamp: new Date().toISOString()
   });

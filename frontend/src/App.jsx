@@ -1,22 +1,21 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { CartProvider, useCart } from './context/CartContext'
+import { CartProvider } from './context/CartContext'
 import { api } from './utils/api'
 import TopNav from './components/TopNav'
-import Storefront from './pages/Storefront'
-import CartPage from './pages/CartPage'
-import AuthPanel from './pages/AuthPanel'
-import VendorDashboard from './pages/VendorDashboard'
-import AdminDashboard from './pages/AdminDashboard'
-import ProductDetail from './pages/ProductDetail'
-import OrdersPage from './pages/OrdersPage'
-import StoresPage from './pages/StoresPage'
-import PaymentsPage from './pages/PaymentsPage'
-import HomePage from './pages/HomePage'
-import SuccessPage from './pages/SuccessPage'
-import WelcomePage from './pages/WelcomePage'
+const Storefront = lazy(() => import('./pages/Storefront'))
+const CartPage = lazy(() => import('./pages/CartPage'))
+const AuthPanel = lazy(() => import('./pages/AuthPanel'))
+const VendorDashboard = lazy(() => import('./pages/VendorDashboard'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const ProductDetail = lazy(() => import('./pages/ProductDetail'))
+const OrdersPage = lazy(() => import('./pages/OrdersPage'))
+const StoresPage = lazy(() => import('./pages/StoresPage'))
+const HomePage = lazy(() => import('./pages/HomePage'))
+const SuccessPage = lazy(() => import('./pages/SuccessPage'))
+const WelcomePage = lazy(() => import('./pages/WelcomePage'))
 
 function RequireAuth({ roles, children }) {
   const { user } = useAuth()
@@ -28,7 +27,6 @@ function RequireAuth({ roles, children }) {
 
 function Shell() {
   const { user } = useAuth()
-  const { reconcile } = useCart()
   const [products, setProducts] = useState([])
   const [stores, setStores] = useState([])
   const [orders, setOrders] = useState([])
@@ -63,30 +61,27 @@ function Shell() {
     refresh()
   }, [refresh])
 
-  useEffect(() => {
-    reconcile(products)
-  }, [products, reconcile])
-
   return (
     <>
       <TopNav />
-      <Routes>
-        <Route path="/" element={<WelcomePage />} />
-        <Route path="/app" element={<RequireAuth><HomePage products={products} stores={stores} /></RequireAuth>} />
-        <Route path="/products" element={<RequireAuth><Storefront products={products} stores={stores} summary={summary} loading={loading} /></RequireAuth>} />
-        <Route path="/stores" element={<RequireAuth><StoresPage stores={stores} products={products} loading={loading} /></RequireAuth>} />
-        <Route path="/products/:id" element={<RequireAuth><ProductDetail products={products} refresh={refresh} /></RequireAuth>} />
-        <Route path="/cart" element={<RequireAuth><CartPage /></RequireAuth>} />
-        <Route path="/checkout" element={<RequireAuth><CartPage checkoutMode /></RequireAuth>} />
-        <Route path="/payments" element={<RequireAuth><PaymentsPage orders={orders} /></RequireAuth>} />
-        <Route path="/login" element={<AuthPanel modeDefault="login" />} />
-        <Route path="/register" element={<AuthPanel modeDefault="register" />} />
-        <Route path="/success" element={<SuccessPage />} />
-        <Route path="/orders" element={<RequireAuth><OrdersPage orders={orders} refresh={refresh} /></RequireAuth>} />
-        <Route path="/vendor" element={<RequireAuth roles={['vendor', 'super_admin']}><VendorDashboard orders={orders} refresh={refresh} /></RequireAuth>} />
-        <Route path="/admin" element={<RequireAuth roles={['super_admin']}><AdminDashboard summary={summary} users={users} /></RequireAuth>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<main className="workspace"><section className="panel"><span className="eyebrow">Loading</span></section></main>}>
+        <Routes>
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/app" element={<RequireAuth><HomePage products={products} stores={stores} /></RequireAuth>} />
+          <Route path="/products" element={<RequireAuth><Storefront products={products} stores={stores} summary={summary} loading={loading} /></RequireAuth>} />
+          <Route path="/stores" element={<RequireAuth><StoresPage stores={stores} products={products} loading={loading} /></RequireAuth>} />
+          <Route path="/products/:id" element={<RequireAuth><ProductDetail products={products} refresh={refresh} /></RequireAuth>} />
+          <Route path="/cart" element={<RequireAuth><CartPage /></RequireAuth>} />
+          <Route path="/checkout" element={<RequireAuth><CartPage checkoutMode /></RequireAuth>} />
+          <Route path="/login" element={<AuthPanel modeDefault="login" />} />
+          <Route path="/register" element={<AuthPanel modeDefault="register" />} />
+          <Route path="/success" element={<SuccessPage />} />
+          <Route path="/orders" element={<RequireAuth><OrdersPage orders={orders} refresh={refresh} /></RequireAuth>} />
+          <Route path="/vendor" element={<RequireAuth roles={['vendor', 'super_admin']}><VendorDashboard products={products} orders={orders} summary={summary} refresh={refresh} /></RequireAuth>} />
+          <Route path="/admin" element={<RequireAuth roles={['super_admin']}><AdminDashboard summary={summary} users={users} stores={stores} /></RequireAuth>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </>
   )
 }

@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const data = require('../services/dataService');
 const { protect, allowRoles } = require('../middleware/authMiddleware');
 const { issueToken } = require('../services/tokenService');
-const { createPaymentIntent } = require('../services/stripeService');
+const { createPaymentIntent, handleStripeWebhook } = require('../services/stripeService');
 const { mediaUploadPlaceholder } = require('../services/storageService');
 const { sendOrderConfirmation } = require('../services/mailService');
 
@@ -181,7 +181,7 @@ router.post('/checkout', protect, allowRoles('customer', 'vendor', 'super_admin'
     }
 
     const orderItems = [];
-    let subtotal = 0;
+    let total = 0;
     let storeId = null;
 
     for (const item of items) {
@@ -197,28 +197,36 @@ router.post('/checkout', protect, allowRoles('customer', 'vendor', 'super_admin'
       }
       const quantity = Math.max(1, Number(item.quantity || 1));
       orderItems.push({ productId: product.id || product._id, title: product.title, quantity, unitPrice: product.price });
-      subtotal += product.price * quantity;
+      total += product.price * quantity;
     }
 
-    const shippingFee = subtotal > 150 ? 0 : 7;
-    const tax = Number((subtotal * 0.08).toFixed(2));
-    const total = Number((subtotal + shippingFee + tax).toFixed(2));
-    const payment = createPaymentIntent({ amount: Math.round(total * 100), paymentMethod });
     const order = await data.orders.create({
       storeId,
       customerId: req.user.id || req.user._id,
       items: orderItems,
-      subtotal,
-      tax,
-      shippingFee,
       total,
+      currency: 'usd',
       paymentMethod,
+      paymentProvider: paymentMethod === 'card' && process.env.STRIPE_SECRET_KEY ? 'stripe' : 'demo',
       paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
       fulfillmentStatus: 'queued',
       shippingAddress
     });
-    const mail = await sendOrderConfirmation(order);
-    res.status(201).json({ success: true, order, payment, mail });
+    const payment = await createPaymentIntent({
+      amount: Math.round(total * 100),
+      currency: 'usd',
+      paymentMethod,
+      orderId: order.id || order._id,
+      customerEmail: req.user.email
+    });
+    const paymentStatus = payment.provider === 'stripe' ? 'pending' : order.paymentStatus;
+    const updatedOrder = await data.orders.update(order.id || order._id, {
+      paymentProvider: payment.provider,
+      stripePaymentIntentId: payment.id,
+      paymentStatus
+    });
+    const mail = await sendOrderConfirmation(updatedOrder || order, req.user);
+    res.status(201).json({ success: true, order: updatedOrder || order, payment, mail });
   } catch (error) {
     next(error);
   }
@@ -233,57 +241,37 @@ router.get('/analytics/summary', protect, allowRoles('vendor', 'super_admin'), a
       data.stores.list(),
       data.users.list()
     ]);
-    const revenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
     const paidOrders = orders.filter((order) => order.paymentStatus === 'paid');
-    const lowStock = products.filter((product) => Number(product.stock || 0) <= 10).length;
-    const byPaymentMethod = orders.reduce((acc, order) => {
-      const key = order.paymentMethod || 'card';
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
+    const revenue = paidOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+    const byDay = new Map();
+    for (let index = 6; index >= 0; index -= 1) {
+      const date = new Date();
+      date.setDate(date.getDate() - index);
+      const key = date.toISOString().slice(0, 10);
+      byDay.set(key, { date: key, revenue: 0, orders: 0 });
+    }
+    orders.forEach((order) => {
+      const key = new Date(order.createdAt || Date.now()).toISOString().slice(0, 10);
+      if (!byDay.has(key)) byDay.set(key, { date: key, revenue: 0, orders: 0 });
+      const bucket = byDay.get(key);
+      bucket.orders += 1;
+      if (order.paymentStatus === 'paid') bucket.revenue += Number(order.total || 0);
+    });
+    const statusCounts = orders.reduce((counts, order) => {
+      counts[order.fulfillmentStatus] = (counts[order.fulfillmentStatus] || 0) + 1;
+      return counts;
     }, {});
-    const byFulfillment = orders.reduce((acc, order) => {
-      const key = order.fulfillmentStatus || 'queued';
-      acc[key] = (acc[key] || 0) + 1;
-      return acc;
-    }, {});
-    const categoryMap = products.reduce((acc, product) => {
-      acc[product.category] = (acc[product.category] || 0) + 1;
-      return acc;
-    }, {});
-    const topCategories = Object.entries(categoryMap)
-      .map(([category, count]) => ({ category, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6);
-    const storeRevenueMap = orders.reduce((acc, order) => {
-      const key = String(order.storeId || 'unknown');
-      acc[key] = (acc[key] || 0) + Number(order.total || 0);
-      return acc;
-    }, {});
-    const revenueByStore = Object.entries(storeRevenueMap)
-      .map(([id, value]) => ({
-        storeId: id,
-        storeName: stores.find((store) => String(store.id || store._id) === id)?.name || 'Store',
-        revenue: value
-      }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
     res.json({
       success: true,
       summary: {
         revenue,
-        paidRevenue: paidOrders.reduce((sum, order) => sum + Number(order.total || 0), 0),
         orders: orders.length,
-        paidOrders: paidOrders.length,
         products: products.length,
         tenants: stores.length,
         users: users.length,
-        lowStock,
-        averageOrderValue: orders.length ? revenue / orders.length : 0,
-        byPaymentMethod,
-        byFulfillment,
-        topCategories,
-        revenueByStore,
-        recentOrders: orders.slice(0, 5)
+        averageOrderValue: paidOrders.length ? revenue / paidOrders.length : 0,
+        chart: Array.from(byDay.values()).sort((a, b) => a.date.localeCompare(b.date)),
+        fulfillment: Object.entries(statusCounts).map(([name, value]) => ({ name, value }))
       }
     });
   } catch (error) {
@@ -295,9 +283,7 @@ router.post('/integrations/upload-placeholder', protect, allowRoles('vendor', 's
   res.json({ success: true, upload: mediaUploadPlaceholder(req.body.fileName || 'product-image') });
 });
 
-router.post('/integrations/stripe/webhook', expressRawJson, (req, res) => {
-  res.json({ success: true, received: true, mode: 'demo-webhook' });
-});
+router.post('/integrations/stripe/webhook', expressRawJson, handleStripeWebhook);
 
 router.get('/admin/users', protect, allowRoles('super_admin'), async (req, res, next) => {
   try {

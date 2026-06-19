@@ -9,35 +9,6 @@ const { demoStores, demoProducts, slugify } = require('../config/demoCatalog');
 
 const memory = { users: [], stores: [], products: [], orders: [] };
 
-function productDetails({ title, category, store, index }) {
-  const colors = ['Graphite', 'Teal', 'Ivory', 'Navy', 'Forest', 'Sand'];
-  return {
-    sku: `${store.slug.toUpperCase().slice(0, 4)}-${String(index + 1).padStart(4, '0')}`,
-    brand: store.name,
-    rating: Number((4.1 + ((index % 8) * 0.06)).toFixed(1)),
-    reviewCount: 18 + ((index * 13) % 420),
-    highlights: [
-      `Selected by ${store.name}`,
-      `Best for ${category.toLowerCase()} buyers`,
-      'Quality checked before dispatch',
-      'Ready for secure NAVEE checkout'
-    ],
-    specifications: {
-      material: category === 'Electronics' || category === 'Audio' ? 'Aluminum and engineered polymer' : 'Premium everyday materials',
-      color: colors[index % colors.length],
-      weight: `${0.4 + (index % 9) * 0.2} kg`,
-      origin: 'NAVEE verified vendor'
-    },
-    shipping: {
-      delivery: `${2 + (index % 5)}-${4 + (index % 5)} business days`,
-      fee: index % 3 === 0 ? 'Free delivery' : '$4 standard delivery',
-      returnPolicy: '7-day return available'
-    },
-    warranty: index % 4 === 0 ? '1-year seller warranty' : '6-month seller warranty',
-    tags: [category.toLowerCase(), title.toLowerCase().split(' ')[0], store.slug]
-  };
-}
-
 function id() {
   return new mongoose.Types.ObjectId().toString();
 }
@@ -58,22 +29,21 @@ async function ensureMemorySeed() {
   const password = await bcrypt.hash('Password123!', 12);
 
   memory.users.push(
-    { id: adminId, _id: adminId, name: 'RED_X Admin', email: 'admin@redx.dev', password, role: 'super_admin', status: 'active' },
+    { id: adminId, _id: adminId, name: 'Market Place Admin', email: 'admin@redx.dev', password, role: 'super_admin', status: 'active' },
     { id: vendorId, _id: vendorId, name: 'Avery Vendor', email: 'vendor@redx.dev', password, role: 'vendor', storeId, status: 'active' },
     { id: customerId, _id: customerId, name: 'Casey Customer', email: 'customer@redx.dev', password, role: 'customer', status: 'active' }
   );
 
-  const [primaryName, primarySlug, primaryPlan, primaryColor] = demoStores[0];
   const primaryStore = {
     id: storeId,
     _id: storeId,
-    name: primaryName,
-    slug: primarySlug,
+    name: 'Market Place Goods',
+    slug: 'market-place-goods',
     ownerId: vendorId,
-    plan: primaryPlan,
+    plan: 'growth',
     status: 'active',
     currency: 'USD',
-    brandColor: primaryColor,
+    brandColor: '#2f6f6a',
     createdAt: new Date().toISOString()
   };
   memory.stores.push(primaryStore);
@@ -108,8 +78,8 @@ async function ensureMemorySeed() {
     seededStores.push(store);
   }
 
-  demoProducts.forEach(([title, description, category, price, stock, imageUrl, productStoreSlug], index) => {
-    const store = seededStores.find((item) => item.slug === productStoreSlug) || seededStores[index % seededStores.length];
+  demoProducts.forEach(([title, description, category, price, stock, imageUrl], index) => {
+    const store = seededStores[index % seededStores.length];
     memory.products.push({
       id: id(),
       _id: id(),
@@ -123,7 +93,7 @@ async function ensureMemorySeed() {
       stock,
       imageUrl,
       status: 'active',
-      ...productDetails({ title, category, store, index }),
+      tags: [category.toLowerCase()],
       createdAt: new Date().toISOString()
     });
   });
@@ -261,6 +231,11 @@ const products = {
 };
 
 const orders = {
+  async findById(orderId) {
+    if (isMongoMode()) return serialize(await Order.findById(orderId));
+    await ensureMemorySeed();
+    return memory.orders.find((item) => item.id === orderId || item._id === orderId);
+  },
   async list(filters = {}) {
     if (isMongoMode()) {
       const query = {};
