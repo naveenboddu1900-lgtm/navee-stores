@@ -20,29 +20,41 @@ function run(name, cwd) {
   return child;
 }
 
-const backend = run('backend', 'backend');
+let backend = null;
 let frontend = null;
+
+function checkBackend() {
+  return new Promise((resolve) => {
+    const request = http.get(backendHealthUrl, (response) => {
+      response.resume();
+      resolve(response.statusCode >= 200 && response.statusCode < 500);
+    });
+
+    request.on('error', () => resolve(false));
+    request.setTimeout(1500, () => {
+      request.destroy();
+      resolve(false);
+    });
+  });
+}
 
 function waitForBackend(retries = 40) {
   return new Promise((resolve, reject) => {
     let attempts = 0;
 
-    function check() {
+    async function check() {
       attempts += 1;
-      const request = http.get(backendHealthUrl, (response) => {
-        response.resume();
-        if (response.statusCode >= 200 && response.statusCode < 500) {
+
+      try {
+        if (await checkBackend()) {
           resolve();
           return;
         }
-        retry();
-      });
+      } catch (_) {
+        // Retry below.
+      }
 
-      request.on('error', retry);
-      request.setTimeout(1500, () => {
-        request.destroy();
-        retry();
-      });
+      retry();
     }
 
     function retry() {
@@ -57,19 +69,26 @@ function waitForBackend(retries = 40) {
   });
 }
 
-waitForBackend()
-  .then(() => {
-    console.log(`Backend ready at ${backendHealthUrl.href}. Starting frontend...`);
+(async function startDev() {
+  if (await checkBackend()) {
+    console.log(`Backend already ready at ${backendHealthUrl.href}. Starting frontend...`);
     frontend = run('frontend', 'frontend');
-  })
+    return;
+  }
+
+  backend = run('backend', 'backend');
+  await waitForBackend();
+  console.log(`Backend ready at ${backendHealthUrl.href}. Starting frontend...`);
+  frontend = run('frontend', 'frontend');
+})()
   .catch((error) => {
     console.error(error.message);
-    backend.kill();
+    if (backend) backend.kill();
     process.exit(1);
   });
 
 function shutdown() {
-  backend.kill();
+  if (backend) backend.kill();
   if (frontend) frontend.kill();
   process.exit(0);
 }

@@ -21,6 +21,17 @@ function validateShippingAddress(address = {}) {
   return requiredFields.every((field) => String(address[field] || '').trim().length > 0);
 }
 
+function calculateOrderCharges(items, shipping = 0) {
+  const subtotal = items.reduce((sum, item) => sum + Number(item.unitPrice || 0) * Number(item.quantity || 1), 0);
+  const tax = Math.round(subtotal * 0.08);
+  return {
+    subtotal,
+    shipping,
+    tax,
+    total: subtotal + shipping + tax
+  };
+}
+
 router.post('/auth/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -189,9 +200,7 @@ router.post('/checkout', protect, allowRoles('customer', 'vendor', 'super_admin'
       throw new Error('Complete shipping address is required');
     }
 
-    const orderItems = [];
-    let total = 0;
-    let storeId = null;
+    const itemsByStore = new Map();
 
     for (const item of items) {
       const product = await data.products.findById(item.productId);
@@ -199,47 +208,56 @@ router.post('/checkout', protect, allowRoles('customer', 'vendor', 'super_admin'
         res.status(400);
         throw new Error('One or more products are unavailable');
       }
-      if (!storeId) storeId = product.storeId;
-      if (String(storeId) !== String(product.storeId)) {
-        res.status(400);
-        throw new Error('Cart can only checkout products from one tenant store at a time');
-      }
       const quantity = Math.max(1, Number(item.quantity || 1));
       if (Number(product.stock || 0) < quantity) {
         res.status(400);
         throw new Error(`${product.title} has only ${product.stock} units available`);
       }
-      orderItems.push({ productId: product.id || product._id, title: product.title, quantity, unitPrice: product.price });
-      total += product.price * quantity;
+      const storeId = String(product.storeId);
+      if (!itemsByStore.has(storeId)) itemsByStore.set(storeId, []);
+      itemsByStore.get(storeId).push({ productId: product.id || product._id, title: product.title, quantity, unitPrice: product.price });
     }
 
-    const order = await data.orders.create({
-      storeId,
-      customerId: req.user.id || req.user._id,
-      items: orderItems,
-      total,
-      currency: 'usd',
-      paymentMethod,
-      paymentProvider: paymentMethod === 'card' && process.env.STRIPE_SECRET_KEY ? 'stripe' : 'demo',
-      paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
-      fulfillmentStatus: 'queued',
-      shippingAddress
-    });
+    const createdOrders = [];
+    let orderIndex = 0;
+    for (const [storeId, storeItems] of itemsByStore.entries()) {
+      const charges = calculateOrderCharges(storeItems, orderIndex === 0 ? 100 : 0);
+      orderIndex += 1;
+      const order = await data.orders.create({
+        storeId,
+        customerId: req.user.id || req.user._id,
+        items: storeItems,
+        ...charges,
+        currency: 'usd',
+        paymentMethod,
+        paymentProvider: paymentMethod === 'card' && process.env.STRIPE_SECRET_KEY ? 'stripe' : 'demo',
+        paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
+        fulfillmentStatus: 'queued',
+        shippingAddress
+      });
+      createdOrders.push(order);
+    }
+
+    const grandTotal = createdOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
     const payment = await createPaymentIntent({
-      amount: Math.round(total * 100),
+      amount: Math.round(grandTotal * 100),
       currency: 'usd',
       paymentMethod,
-      orderId: order.id || order._id,
+      orderId: createdOrders.map((order) => order.id || order._id).join(','),
       customerEmail: req.user.email
     });
-    const paymentStatus = payment.provider === 'stripe' ? 'pending' : order.paymentStatus;
-    const updatedOrder = await data.orders.update(order.id || order._id, {
-      paymentProvider: payment.provider,
-      stripePaymentIntentId: payment.id,
-      paymentStatus
-    });
-    const mail = await sendOrderConfirmation(updatedOrder || order, req.user);
-    res.status(201).json({ success: true, order: updatedOrder || order, payment, mail });
+    const updatedOrders = [];
+    for (const order of createdOrders) {
+      const paymentStatus = payment.provider === 'stripe' ? 'pending' : order.paymentStatus;
+      const updatedOrder = await data.orders.update(order.id || order._id, {
+        paymentProvider: payment.provider,
+        stripePaymentIntentId: payment.id,
+        paymentStatus
+      });
+      updatedOrders.push(updatedOrder || order);
+    }
+    const mail = await sendOrderConfirmation(updatedOrders[0], req.user);
+    res.status(201).json({ success: true, order: updatedOrders[0], orders: updatedOrders, payment, mail });
   } catch (error) {
     next(error);
   }

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useState } from 'react'
 import { money } from '../utils/api'
-import { useCart } from '../context/CartContext'
+import { useCart } from '../context/useCart'
 
 export default function ProductCard({ product }) {
   const { add } = useCart()

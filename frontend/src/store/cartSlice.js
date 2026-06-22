@@ -4,6 +4,9 @@ const initialState = {
   items: []
 }
 
+const SHIPPING_CHARGE = 100
+const TAX_RATE = 0.08
+
 function productId(product) {
   return product.id || product._id
 }
@@ -49,9 +52,21 @@ export function selectCartItems(state) {
 }
 
 export function selectCartTotal(state) {
-  return state.cart.items.reduce((sum, item) => sum + Number(item.product.price || 0) * item.quantity, 0)
+  return selectCartSubtotal(state) + selectCartShipping(state) + selectCartTax(state)
 }
 
 export function selectCartCount(state) {
   return state.cart.items.reduce((sum, item) => sum + item.quantity, 0)
+}
+
+export function selectCartSubtotal(state) {
+  return state.cart.items.reduce((sum, item) => sum + Number(item.product.price || 0) * item.quantity, 0)
+}
+
+export function selectCartShipping(state) {
+  return state.cart.items.length ? SHIPPING_CHARGE : 0
+}
+
+export function selectCartTax(state) {
+  return Math.round(selectCartSubtotal(state) * TAX_RATE)
 }

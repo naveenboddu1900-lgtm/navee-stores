@@ -1,6 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || '/api'
 const REQUEST_TIMEOUT_MS = 15000
 const STATIC_DEMO = import.meta.env.VITE_STATIC_DEMO === 'true'
+const STATIC_STATE_KEY = 'marketPlaceStaticStateV2'
 
 function getToken() {
   return localStorage.getItem('redx_token')
@@ -34,24 +35,24 @@ export async function api(path, options = {}) {
 }
 
 export function money(value) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0)
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value || 0)
 }
 
 const demoUsers = [
   { id: 'admin-demo', name: 'Platform Admin', email: 'admin@redx.dev', password: 'Password123!', role: 'super_admin', status: 'active' },
-  { id: 'vendor-demo', name: 'Navee Vendor', email: 'vendor@redx.dev', password: 'Password123!', role: 'vendor', storeId: 'market-place-goods', status: 'active' },
+  { id: 'vendor-demo', name: 'Navee Vendor', email: 'vendor@redx.dev', password: 'Password123!', role: 'vendor', storeId: 'naveen-mobile-store', status: 'active' },
   { id: 'customer-demo', name: 'Casey Customer', email: 'customer@redx.dev', password: 'Password123!', role: 'customer', status: 'active' }
 ]
 
 const seedStores = [
   ['Market Place Goods', 'market-place-goods', 'growth', '#2f6f6a'],
+  ['Naveen Mobile Store', 'naveen-mobile-store', 'scale', '#0f4c81'],
+  ['Andhra Smart Mobiles', 'andhra-smart-mobiles', 'growth', '#2563eb'],
+  ['Budget Phone Bazaar', 'budget-phone-bazaar', 'starter', '#16a34a'],
   ['Northline Apparel', 'northline-apparel', 'starter', '#1f7a8c'],
   ['Urban Desk Supply', 'urban-desk-supply', 'growth', '#3f6f3f'],
-  ['Peak Trail Goods', 'peak-trail-goods', 'scale', '#6b4f2a'],
-  ['Nova Beauty Lab', 'nova-beauty-lab', 'growth', '#b83280'],
   ['Circuit Home Tech', 'circuit-home-tech', 'scale', '#2556a3'],
-  ['Mosaic Kitchen Co', 'mosaic-kitchen-co', 'starter', '#c16622'],
-  ['Aster Kids Market', 'aster-kids-market', 'growth', '#7c5cc4']
+  ['Pulse Gaming Store', 'pulse-gaming-store', 'scale', '#7e22ce']
 ].map(([name, slug, plan, brandColor], index) => ({
   id: slug,
   name,
@@ -64,18 +65,18 @@ const seedStores = [
 }))
 
 const seedProducts = [
-  ['Command Hoodie', 'Premium cotton fleece hoodie built for daily operators.', 'Apparel', 68, 38, 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=80'],
-  ['Ops Desk Mat', 'Large stitched desk mat for focused work setups and stores.', 'Workspace', 36, 54, 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80'],
-  ['Launch Backpack', 'Weather-resistant backpack for founders, vendors, and travel.', 'Bags', 112, 21, 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80'],
-  ['Signal Bottle', 'Insulated steel bottle with matte finish and durable cap.', 'Accessories', 28, 70, 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80'],
-  ['Northline Overshirt', 'Structured overshirt with soft twill and reinforced seams.', 'Apparel', 74, 44, 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=900&q=80'],
-  ['Minimal Task Lamp', 'Dimmable aluminum lamp for retail counters and desks.', 'Workspace', 59, 32, 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=80'],
-  ['Trail Flask Set', 'Two insulated flasks made for weekend stock and outdoor bundles.', 'Outdoor', 42, 65, 'https://images.unsplash.com/photo-1523362628745-0c100150b504?auto=format&fit=crop&w=900&q=80'],
-  ['Botanical Face Kit', 'Daily skincare kit with cleanser, serum, and moisturizer.', 'Beauty', 86, 28, 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=80'],
-  ['Smart Home Hub', 'Compact controller for lights, sensors, and home automations.', 'Electronics', 129, 19, 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=900&q=80'],
-  ['Stoneware Dinner Set', 'Six-piece glazed dinner set for modern kitchen tables.', 'Kitchen', 95, 24, 'https://images.unsplash.com/photo-1516594798947-e65505dbb29d?auto=format&fit=crop&w=900&q=80'],
-  ['Kids Explorer Pack', 'Lightweight activity backpack with safe pockets and bright trims.', 'Kids', 39, 58, 'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=900&q=80'],
-  ['Resistance Band Pro', 'Stackable resistance kit with handles, anchors, and carry bag.', 'Fitness', 46, 83, 'https://images.unsplash.com/photo-1598289431512-b97b0917affc?auto=format&fit=crop&w=900&q=80']
+  ['Navee X1 5G Mobile', 'Fast 5G smartphone with AMOLED display, 128GB storage, and all-day battery.', 'Mobiles', 18999, 38, 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=900&q=80'],
+  ['Navee Pro Max Mobile', 'Premium camera phone with flagship performance and 256GB storage.', 'Mobiles', 42999, 18, 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80'],
+  ['Andhra A5 Smart Phone', 'Affordable Android mobile with large display and reliable daily performance.', 'Mobiles', 12999, 46, 'https://images.unsplash.com/photo-1567581935884-3349723552ca?auto=format&fit=crop&w=900&q=80'],
+  ['Budget 5G Phone', 'Value 5G mobile with dual SIM support and fast charging.', 'Mobiles', 10999, 72, 'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=900&q=80'],
+  ['Command Hoodie', 'Premium cotton fleece hoodie built for daily operators.', 'Apparel', 1499, 38, 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=80'],
+  ['Ops Desk Mat', 'Large stitched desk mat for focused work setups and stores.', 'Workspace', 1299, 54, 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80'],
+  ['Smart Home Hub', 'Compact controller for lights, sensors, and home automations.', 'Electronics', 4999, 19, 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=900&q=80'],
+  ['RGB Keyboard', 'Mechanical keyboard with hot-swappable switches and RGB modes.', 'Gaming', 2999, 29, 'https://images.unsplash.com/photo-1541140532154-b024d705b90a?auto=format&fit=crop&w=900&q=80'],
+  ['Launch Backpack', 'Weather-resistant backpack for founders, vendors, and travel.', 'Bags', 2599, 21, 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=80'],
+  ['Studio Headphones', 'Closed-back headphones tuned for calls, music, and editing.', 'Audio', 3499, 26, 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80'],
+  ['Signal Bottle', 'Insulated steel bottle with matte finish and durable cap.', 'Accessories', 1199, 70, 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=900&q=80'],
+  ['Minimal Task Lamp', 'Dimmable aluminum lamp for retail counters and desks.', 'Workspace', 1699, 32, 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=80']
 ].map(([title, description, category, price, stock, imageUrl], index) => {
   const store = seedStores[index % seedStores.length]
   const id = slugify(title)
@@ -104,8 +105,11 @@ const seedOrders = [
     id: 'order-demo-1',
     storeId: 'market-place-goods',
     customerId: 'customer-demo',
-    items: [{ productId: 'command-hoodie', title: 'Command Hoodie', quantity: 1, unitPrice: 68 }],
-    total: 68,
+    items: [{ productId: 'navee-x1-5g-mobile', title: 'Navee X1 5G Mobile', quantity: 1, unitPrice: 18999 }],
+    subtotal: 18999,
+    shipping: 100,
+    tax: 1520,
+    total: 20619,
     currency: 'usd',
     paymentMethod: 'card',
     paymentProvider: 'demo',
@@ -146,7 +150,7 @@ function initialState() {
 }
 
 function getState() {
-  const stored = localStorage.getItem('marketPlaceStaticState')
+  const stored = localStorage.getItem(STATIC_STATE_KEY)
   if (stored) return JSON.parse(stored)
   const state = initialState()
   saveState(state)
@@ -154,7 +158,7 @@ function getState() {
 }
 
 function saveState(state) {
-  localStorage.setItem('marketPlaceStaticState', JSON.stringify(state))
+  localStorage.setItem(STATIC_STATE_KEY, JSON.stringify(state))
 }
 
 function currentUser(state) {
@@ -202,6 +206,17 @@ function analytics(state, user) {
     averageOrderValue: paidOrders.length ? revenue / paidOrders.length : 0,
     chart,
     fulfillment: Object.entries(fulfillmentCounts).map(([name, value]) => ({ name, value }))
+  }
+}
+
+function orderCharges(items, shipping = 0) {
+  const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
+  const tax = Math.round(subtotal * 0.08)
+  return {
+    subtotal,
+    shipping,
+    tax,
+    total: subtotal + shipping + tax
   }
 }
 
@@ -258,14 +273,19 @@ async function demoApi(path, options = {}) {
       if (!product) throw new Error('One or more products are unavailable')
       return { productId: product.id, title: product.title, quantity: item.quantity, unitPrice: product.price, storeId: product.storeId }
     })
-    const storeId = orderItems[0].storeId
-    const total = orderItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
-    const order = {
-      id: `order-${Date.now()}`,
+    const grouped = orderItems.reduce((groups, item) => {
+      groups[item.storeId] ||= []
+      groups[item.storeId].push(item)
+      return groups
+    }, {})
+    const orders = Object.entries(grouped).map(([storeId, storeItems], index) => {
+      const charges = orderCharges(storeItems, index === 0 ? 100 : 0)
+      return {
+      id: `order-${Date.now()}-${index + 1}`,
       storeId,
       customerId: user.id,
-      items: orderItems,
-      total,
+      items: storeItems,
+      ...charges,
       currency: 'usd',
       paymentMethod: options.body?.paymentMethod || 'card',
       paymentProvider: 'demo',
@@ -273,10 +293,11 @@ async function demoApi(path, options = {}) {
       fulfillmentStatus: 'queued',
       shippingAddress: options.body?.shippingAddress,
       createdAt: new Date().toISOString()
-    }
-    state.orders.push(order)
+      }
+    })
+    state.orders.push(...orders)
     saveState(state)
-    return { success: true, order, payment: { provider: 'demo', clientSecret: `demo_secret_${Date.now()}` } }
+    return { success: true, order: orders[0], orders, payment: { provider: 'demo', clientSecret: `demo_secret_${Date.now()}` } }
   }
 
   if (path === '/analytics/summary') {

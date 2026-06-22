@@ -11,67 +11,68 @@ async function seedDemoData() {
     return;
   }
 
-  const existing = await User.findOne({ email: 'admin@redx.dev' });
-  if (existing) return;
+  const admin = await User.findOneAndUpdate(
+    { email: 'admin@redx.dev' },
+    { $setOnInsert: { name: 'Market Place Admin', password: 'Password123!', role: 'super_admin', status: 'active' } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+  await User.findOneAndUpdate(
+    { email: 'customer@redx.dev' },
+    { $setOnInsert: { name: 'Casey Customer', password: 'Password123!', role: 'customer', status: 'active' } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
 
-  const admin = await User.create({ name: 'Market Place Admin', email: 'admin@redx.dev', password: 'Password123!', role: 'super_admin' });
-  const vendor = await User.create({ name: 'Avery Vendor', email: 'vendor@redx.dev', password: 'Password123!', role: 'vendor' });
-  await User.create({ name: 'Casey Customer', email: 'customer@redx.dev', password: 'Password123!', role: 'customer' });
-
-  const [primaryName, primarySlug, primaryPlan, primaryColor] = demoStores[0];
-  const store = await Store.create({
-    name: primaryName,
-    slug: primarySlug,
-    ownerId: vendor._id,
-    plan: primaryPlan,
-    status: 'active',
-    currency: 'USD',
-    brandColor: primaryColor
-  });
-
-  vendor.storeId = store._id;
-  await vendor.save();
-
-  const seededStores = [{ store, owner: vendor }];
-  for (const [index, [name, slug, plan, brandColor]] of demoStores.slice(1).entries()) {
-    const owner = await User.create({
-      name: `${name} Vendor`,
-      email: `vendor${index + 2}@redx.dev`,
-      password: 'Password123!',
-      role: 'vendor'
-    });
-    const tenantStore = await Store.create({
-      name,
-      slug,
-      ownerId: owner._id,
-      plan,
-      status: 'active',
-      currency: 'USD',
-      brandColor
-    });
+  const seededStores = [];
+  for (const [index, [name, slug, plan, brandColor]] of demoStores.entries()) {
+    const email = index === 0 ? 'vendor@redx.dev' : `vendor${index + 1}@redx.dev`;
+    const owner = await User.findOneAndUpdate(
+      { email },
+      { $setOnInsert: { name: `${name} Vendor`, password: 'Password123!', role: 'vendor', status: 'active' } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    const tenantStore = await Store.findOneAndUpdate(
+      { slug },
+      {
+        name,
+        slug,
+        ownerId: owner._id,
+        plan,
+        status: 'active',
+        currency: 'USD',
+        brandColor
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
     owner.storeId = tenantStore._id;
     await owner.save();
     seededStores.push({ store: tenantStore, owner });
   }
 
-  await Product.insertMany(demoProducts.map(([title, description, category, price, stock, imageUrl], index) => {
+  for (const [index, [title, description, category, price, stock, imageUrl]] of demoProducts.entries()) {
     const tenant = seededStores[index % seededStores.length];
-    return {
-      storeId: tenant.store._id,
-      vendorId: tenant.owner._id,
-      title,
-      slug: slugify(title),
-      description,
-      category,
-      price,
-      stock,
-      imageUrl,
-      status: 'active',
-      tags: [category.toLowerCase()]
-    };
-  }));
+    const slug = slugify(title);
+    await Product.findOneAndUpdate(
+      { storeId: tenant.store._id, slug },
+      {
+        storeId: tenant.store._id,
+        vendorId: tenant.owner._id,
+        title,
+        slug,
+        description,
+        category,
+        price,
+        stock,
+        imageUrl,
+        status: 'active',
+        tags: [category.toLowerCase()]
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  }
 
-  console.log(`MongoDB seeded for ${admin.email}.`);
+  await Product.updateMany({ price: { $lte: 1000 } }, { $set: { price: 1001 } });
+
+  console.log(`MongoDB demo catalog refreshed for ${admin.email}.`);
 }
 
 if (require.main === module) {

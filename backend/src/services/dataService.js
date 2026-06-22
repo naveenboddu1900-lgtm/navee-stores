@@ -99,13 +99,19 @@ async function ensureMemorySeed() {
   });
 
   const first = memory.products[0];
+  const demoSubtotal = first.price * 2;
+  const demoShipping = 100;
+  const demoTax = Math.round(demoSubtotal * 0.08);
   memory.orders.push({
     id: id(),
     _id: id(),
     storeId,
     customerId,
     items: [{ productId: first.id, title: first.title, quantity: 2, unitPrice: first.price }],
-    total: first.price * 2,
+    subtotal: demoSubtotal,
+    shipping: demoShipping,
+    tax: demoTax,
+    total: demoSubtotal + demoShipping + demoTax,
     paymentStatus: 'paid',
     fulfillmentStatus: 'processing',
     shippingAddress: { fullName: 'Casey Customer', line1: '14 Market Street', city: 'Austin', country: 'USA', phone: '+1 555 0132' },

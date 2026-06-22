@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 
 const demos = [
   ['Super Admin', 'admin@redx.dev'],
@@ -14,10 +14,6 @@ export default function AuthPanel({ modeDefault = 'login' }) {
   const [mode, setMode] = useState(modeDefault)
   const [form, setForm] = useState({ name: '', email: 'customer@redx.dev', password: 'Password123!' })
   const [error, setError] = useState('')
-
-  useEffect(() => {
-    setMode(modeDefault)
-  }, [modeDefault])
 
   async function submit(event) {
     event.preventDefault()
