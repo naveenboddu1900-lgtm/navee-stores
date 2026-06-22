@@ -1,8 +1,9 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
+import { useAuth } from './context/useAuth'
 import { api } from './utils/api'
 import TopNav from './components/TopNav'
 const Storefront = lazy(() => import('./pages/Storefront'))
@@ -58,7 +59,11 @@ function Shell() {
   }, [user])
 
   useEffect(() => {
-    refresh()
+    const refreshId = window.setTimeout(() => {
+      refresh()
+    }, 0)
+
+    return () => window.clearTimeout(refreshId)
   }, [refresh])
 
   return (
@@ -73,8 +78,8 @@ function Shell() {
           <Route path="/products/:id" element={<RequireAuth><ProductDetail products={products} refresh={refresh} /></RequireAuth>} />
           <Route path="/cart" element={<RequireAuth><CartPage /></RequireAuth>} />
           <Route path="/checkout" element={<RequireAuth><CartPage checkoutMode /></RequireAuth>} />
-          <Route path="/login" element={<AuthPanel modeDefault="login" />} />
-          <Route path="/register" element={<AuthPanel modeDefault="register" />} />
+          <Route path="/login" element={<AuthPanel key="login" modeDefault="login" />} />
+          <Route path="/register" element={<AuthPanel key="register" modeDefault="register" />} />
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/orders" element={<RequireAuth><OrdersPage orders={orders} refresh={refresh} /></RequireAuth>} />
           <Route path="/vendor" element={<RequireAuth roles={['vendor', 'super_admin']}><VendorDashboard products={products} orders={orders} summary={summary} refresh={refresh} /></RequireAuth>} />
@@ -87,13 +92,17 @@ function Shell() {
 }
 
 export default function App() {
+  const staticDemo = import.meta.env.VITE_STATIC_DEMO === 'true'
+  const basename = staticDemo || import.meta.env.BASE_URL === '/' ? undefined : import.meta.env.BASE_URL.replace(/\/$/, '')
+  const Router = staticDemo ? HashRouter : BrowserRouter
+
   return (
-    <BrowserRouter>
+    <Router basename={basename}>
       <AuthProvider>
         <CartProvider>
           <Shell />
         </CartProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </Router>
   )
 }
