@@ -37,7 +37,7 @@ jobs:
         run: npm run build
         working-directory: frontend
         env:
-          VITE_BASE_PATH: /navee-stores/
+          VITE_BASE_PATH: ./
           VITE_STATIC_DEMO: "true"
 
       - name: Add SPA fallback
