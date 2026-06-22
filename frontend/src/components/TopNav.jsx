@@ -9,11 +9,11 @@ export default function TopNav() {
 
   return (
     <header className="top-nav">
-      <Link className="brand" to="/" aria-label="Market Place home">
+      <Link className="brand" to="/" aria-label="Market Place .in home">
         <BrandLogo />
         <span>
-          <strong>Market Place</strong>
-          <small>multi-vendor commerce</small>
+          <strong>Market Place .in</strong>
+          <small>multi-vendor commerce India</small>
         </span>
       </Link>
       <nav>
