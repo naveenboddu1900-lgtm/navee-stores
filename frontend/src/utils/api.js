@@ -1,7 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || '/api'
 const REQUEST_TIMEOUT_MS = 15000
 const STATIC_DEMO = import.meta.env.VITE_STATIC_DEMO === 'true'
-const STATIC_STATE_KEY = 'marketPlaceStaticStateV2'
+const STATIC_STATE_KEY = 'marketPlaceStaticStateV3'
 
 function getToken() {
   return localStorage.getItem('redx_token')
@@ -69,6 +69,12 @@ const seedProducts = [
   ['Navee Pro Max Mobile', 'Premium camera phone with flagship performance and 256GB storage.', 'Mobiles', 42999, 18, 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80'],
   ['Andhra A5 Smart Phone', 'Affordable Android mobile with large display and reliable daily performance.', 'Mobiles', 12999, 46, 'https://images.unsplash.com/photo-1567581935884-3349723552ca?auto=format&fit=crop&w=900&q=80'],
   ['Budget 5G Phone', 'Value 5G mobile with dual SIM support and fast charging.', 'Mobiles', 10999, 72, 'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=900&q=80'],
+  ['Navee Ultra 5G Mobile', 'Premium 5G mobile with 12GB RAM, 256GB storage, and fast charging.', 'Mobiles', 28999, 24, 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?auto=format&fit=crop&w=900&q=80'],
+  ['Navee Fold Plus Mobile', 'Foldable display mobile with flagship multitasking power and dual screens.', 'Mobiles', 79999, 10, 'https://images.unsplash.com/photo-1616348436168-de43ad0db179?auto=format&fit=crop&w=900&q=80'],
+  ['Andhra Pro Camera Phone', 'High-end camera mobile with optical stabilization and night photography mode.', 'Mobiles', 34999, 22, 'https://images.unsplash.com/photo-1556656793-08538906a9f8?auto=format&fit=crop&w=900&q=80'],
+  ['Budget Prime 5G Mobile', 'Performance 5G mobile with large battery, AMOLED display, and 8GB RAM.', 'Mobiles', 21999, 36, 'https://images.unsplash.com/photo-1574944985070-8f3ebc6b79d2?auto=format&fit=crop&w=900&q=80'],
+  ['Navee Gaming Phone', 'Gaming-focused mobile with high refresh display and advanced cooling.', 'Mobiles', 54999, 14, 'https://images.unsplash.com/photo-1604671368394-2240d0b1bb6c?auto=format&fit=crop&w=900&q=80'],
+  ['Navee Business Pro Mobile', 'Secure business mobile with long battery life and enterprise-grade storage.', 'Mobiles', 24999, 31, 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=900&q=80'],
   ['Command Hoodie', 'Premium cotton fleece hoodie built for daily operators.', 'Apparel', 1499, 38, 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=80'],
   ['Ops Desk Mat', 'Large stitched desk mat for focused work setups and stores.', 'Workspace', 1299, 54, 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80'],
   ['Smart Home Hub', 'Compact controller for lights, sensors, and home automations.', 'Electronics', 4999, 19, 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=900&q=80'],

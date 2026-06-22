@@ -35,8 +35,17 @@ export default function CartPage() {
           paymentMethod
         }
       })
+      const paidAmount = total
       clear()
-      navigate(`/success?type=checkout&paymentMethod=${paymentMethod}`)
+      const params = new URLSearchParams({
+        type: 'checkout',
+        paymentMethod,
+        amount: String(paidAmount),
+        name: address.fullName,
+        mobile: address.phone,
+        village: address.city
+      })
+      navigate(`/success?${params.toString()}`)
     } catch (error) {
       setStatus(error.message)
     }
@@ -70,7 +79,7 @@ export default function CartPage() {
           <div className="summary-total"><span>Total</span><strong>{money(total)}</strong></div>
         </div>
         {Object.keys(address).map((key) => (
-          <label key={key}>{key.replace(/([A-Z])/g, ' $1')}
+          <label key={key}>{key === 'city' ? 'Village' : key.replace(/([A-Z])/g, ' $1')}
             <input value={address[key]} onChange={(e) => setAddress({ ...address, [key]: e.target.value })} />
           </label>
         ))}

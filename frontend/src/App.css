@@ -564,11 +564,43 @@ a {
   line-height: 1.6;
 }
 
+.paid-amount {
+  display: block;
+  margin: 12px 0 8px;
+  color: #1f3d38;
+  font-size: 22px;
+}
+
 .success-panel small {
   display: block;
   color: #6b665f;
   margin-bottom: 18px;
   text-transform: capitalize;
+}
+
+.success-details {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid #e7e1d8;
+  border-radius: 8px;
+  background: #f8f5ef;
+}
+
+.success-details div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.success-details span {
+  color: #6b665f;
+}
+
+.success-details strong {
+  color: #211f1c;
+  text-align: right;
 }
 
 .success-actions {

@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom'
+import { money } from '../utils/api'
 
 const messages = {
   login: {
@@ -43,6 +44,10 @@ export default function SuccessPage() {
   const [searchParams] = useSearchParams()
   const type = searchParams.get('type') || 'request'
   const paymentMethod = searchParams.get('paymentMethod')
+  const amount = Number(searchParams.get('amount') || 0)
+  const customerName = searchParams.get('name')
+  const mobile = searchParams.get('mobile')
+  const village = searchParams.get('village')
   const message = messages[type] || messages.request
 
   return (
@@ -52,7 +57,15 @@ export default function SuccessPage() {
         <span className="eyebrow">Successful request</span>
         <h1>{message.title}</h1>
         <p>{message.text}</p>
-        {paymentMethod && <small>Payment method: {paymentMethod.replace('_', ' ')}</small>}
+        {amount > 0 && <strong className="paid-amount">Amount paid: {money(amount)}</strong>}
+        {paymentMethod && <small>Payment method: {paymentMethod.replace(/_/g, ' ')}</small>}
+        {(customerName || mobile || village) && (
+          <div className="success-details">
+            {customerName && <div><span>Name</span><strong>{customerName}</strong></div>}
+            {mobile && <div><span>Mobile number</span><strong>{mobile}</strong></div>}
+            {village && <div><span>Village</span><strong>{village}</strong></div>}
+          </div>
+        )}
         <div className="success-actions">
           <Link className="primary link-button" to={message.href}>{message.action}</Link>
           <Link className="ghost link-button" to="/">Welcome page</Link>
