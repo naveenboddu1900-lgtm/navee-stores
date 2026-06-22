@@ -38,7 +38,6 @@ export default function TopNav() {
         {user?.role === 'super_admin' && <NavLink to="/admin">Admin</NavLink>}
       </nav>
       <div className="identity">
-        <small className="developer-credit">Developed by Naveen Kumar Boddu</small>
         {user ? (
           <>
             <span>{user.name}</span>

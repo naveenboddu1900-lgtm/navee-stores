@@ -87,6 +87,7 @@ function Shell() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
+      <footer className="site-credit">Developed by Naveen Kumar Boddu</footer>
     </>
   )
 }

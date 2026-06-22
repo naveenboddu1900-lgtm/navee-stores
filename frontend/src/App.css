@@ -131,17 +131,6 @@
   gap: 10px;
 }
 
-.developer-credit {
-  display: block;
-  border: 1px solid rgba(239, 229, 212, 0.2);
-  border-radius: 8px;
-  padding: 10px;
-  color: #efe5d4;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1.35;
-}
-
 .primary {
   display: inline-flex;
   align-items: center;
@@ -176,6 +165,14 @@ a {
 .auth-grid {
   width: min(1180px, calc(100% - 304px));
   margin: 28px 28px 56px 276px;
+}
+
+.site-credit {
+  width: min(1180px, calc(100% - 304px));
+  margin: -24px 28px 28px 276px;
+  color: #7a736a;
+  font-size: 12px;
+  text-align: center;
 }
 
 .hero {
@@ -1002,9 +999,16 @@ input {
   }
 
   .workspace,
-  .auth-grid {
+  .auth-grid,
+  .site-credit {
     width: min(1180px, calc(100% - 32px));
-    margin: 28px auto 56px;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .site-credit {
+    margin-top: -24px;
+    margin-bottom: 24px;
   }
 
   .welcome-page {
